@@ -1,6 +1,6 @@
 ![Logo](https://pub.files.multilan.de/ik-bus-tool/logo.png)
 
-## I∕K-Bus Tool  
+## I/K-Bus Tool  
 LIN-Bus (BMW I/K-Bus Protocol) Logger & Writer  
 
 ![Screenshot](https://pub.files.multilan.de/ik-bus-tool/screenshot.png)
