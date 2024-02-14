@@ -46,7 +46,7 @@ Install the requirements
 
 Run the python script main.py
 
-```./venv/bin/python3 main.py```
+```.venv/bin/python3 main.py```
 
 You may need to set the right permissions on the serial device, otherwise you may get a permission error.
 
