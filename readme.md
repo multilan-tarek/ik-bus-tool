@@ -24,11 +24,12 @@ Requirements are included in the packaged versions.
 ### Install
 
 #### Windows
-Download package for [Windows](https://pub.files.multilan.de/ik-bus-tool/1.0/win/I%E2%80%89%E2%88%95%E2%80%89K-Bus%20Tool.exe)
-Download setup for [Windows](https://pub.files.multilan.de/ik-bus-tool/1.0/win/I%E2%80%89%E2%88%95%E2%80%89K-Bus%20Tool%20Setup.exe)
+Download [Package](https://pub.files.multilan.de/ik-bus-tool/1.0/win/I%E2%80%89%E2%88%95%E2%80%89K-Bus%20Tool.exe) for Windows
+
+Download [Setup](https://pub.files.multilan.de/ik-bus-tool/1.0/win/I%E2%80%89%E2%88%95%E2%80%89K-Bus%20Tool%20Setup.exe) for Windows 
 
 #### macOS
-Download package for [Mac](https://pub.files.multilan.de/ik-bus-tool/1.0/mac/I%E2%80%89%E2%88%95%E2%80%89K-Bus%20Tool.app.zip)
+Download [Package](https://pub.files.multilan.de/ik-bus-tool/1.0/mac/I%E2%80%89%E2%88%95%E2%80%89K-Bus%20Tool.app.zip) for macOS
 
 #### Manual/Others
 Clone the repo
