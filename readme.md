@@ -29,7 +29,7 @@ Download [Package](https://pub.files.multilan.de/ik-bus-tool/1.0/win/I%E2%80%89%
 Download [Setup](https://pub.files.multilan.de/ik-bus-tool/1.0/win/I%20%E2%88%95%20K-Bus%20Tool%20Setup.exe) for Windows 
 
 #### macOS
-Download [Package](https://pub.files.multilan.de/ik-bus-tool/1.0/mac/I%E2%80%89%E2%88%95%E2%80%89K-Bus%20Tool.app.zip) for macOS
+Download [Package](https://pub.files.multilan.de/ik-bus-tool/1.0/mac/I%E2%80%89%E2%88%95%E2%80%89K-Bus%20Tool.zip) for macOS
 
 #### Manual/Others
 Clone the repo
