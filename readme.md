@@ -15,7 +15,7 @@ LIN-Bus (BMW I/K-Bus Protocol) Logger & Writer
 - Tool to convert text to data  
   
 ### Requirements
-Requirements are included in the packaged version.
+Requirements are included in the packaged versions.
 - PyQt6
 - pyserial
 - python3
