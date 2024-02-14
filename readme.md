@@ -36,9 +36,13 @@ Clone the repo
 
 ```git clone https://git.multilan.de/tarek/ik-bus-tool.git```
 
-Navigate to the project directory and install the requirements
+Navigate to the project directory and create a virtual environment
 
-```python3 -m pip install -r requirements.txt```
+```python3 -m pip venv .venv```
+
+Install the requirements
+
+```.venv/bin/pip3 -m pip install -r requirements.txt```
 
 Run the python script main.py
 
