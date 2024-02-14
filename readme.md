@@ -1,6 +1,6 @@
 ![Logo](https://pub.files.multilan.de/ik-bus-tool/logo.png)
 
-## I∕K-Bus Tool  
+## I/K-Bus Tool  
 LIN-Bus (BMW I/K-Bus Protocol) Logger & Writer  
 
 ![Screenshot](https://pub.files.multilan.de/ik-bus-tool/screenshot.png)
@@ -15,7 +15,7 @@ LIN-Bus (BMW I/K-Bus Protocol) Logger & Writer
 - Tool to convert text to data  
   
 ### Requirements
-Requirements are included in the packaged version.
+Requirements are included in the packaged versions.
 - PyQt6
 - pyserial
 - python3
