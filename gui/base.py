@@ -1,11 +1,12 @@
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QGroupBox, QTableWidget, \
     QAbstractItemView, QTableWidgetItem, QFileDialog, QMessageBox
+from serial import SerialException
 
 from bus.frame import BusFrame
 from gui.about import About
 from gui.helper import get_logo, open_url
-from gui.ike_simulation import IkeSimulation
+from gui.simulation.ike import IkeSimulation
 from gui.tools.charset_browser import CharsetBrowser
 from gui.tools.scanner import Scanner
 from gui.serial_manager import SerialManager
@@ -24,6 +25,7 @@ class GUI(QMainWindow):
 
         self.serial_manager = SerialManager(self.config)
         self.serial_manager.frame_received.connect(self.frame_received)
+        self.serial_manager.error_occurred.connect(self.serial_error_occurred)
         application.quit_event.connect(self.serial_manager.stop)
 
         self.ike_simulation = IkeSimulation(self)
@@ -193,10 +195,10 @@ class GUI(QMainWindow):
                 data = data[frame_length:]
 
         except SyntaxError:
-            QMessageBox.information(self, "Error", "The selected file is corrupted")
+            QMessageBox.critical(self, "Could not load file", "The selected file is corrupted")
             return
 
-        QMessageBox.information(self, "File saved", "File successfully loaded")
+        QMessageBox.information(self, "File loaded", "File successfully loaded")
 
 
     def save_as_bin(self):
@@ -248,3 +250,9 @@ class GUI(QMainWindow):
             self.frame_log.clear()
             self.table.clear_contents()
             self.table.row_count = 0
+
+    def serial_error_occurred(self, e):
+        if isinstance(e, SerialException) and e.args[0] == 13:
+            QMessageBox.critical(self, "Serial Error", "Could not open serial port. Permission denied.")
+        else:
+            QMessageBox.critical(self, "Serial Error", "An unknown error occurred.")

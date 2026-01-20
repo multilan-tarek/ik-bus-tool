@@ -1,5 +1,7 @@
 from functools import partial
 from PySide6.QtCore import QTimer, Signal, QObject
+from PySide6.QtWidgets import QMessageBox
+from serial.serialutil import SerialException
 from serial.tools import list_ports
 from bus.base import Bus
 from bus.frame import BusFrame
@@ -74,10 +76,13 @@ class SerialManager(QObject):
         self.refresh_menu()
 
     def refresh_menu(self):
+        self.menu_start.enabled = self.selected_port is not None
         self.menu_ports.clear()
 
         if self.selected_port:
             self.menu_ports.title = f"Port ({self.selected_port.name})"
+        else:
+            self.menu_ports.title = "Port"
 
         for port in self.ports:
             port_name = port.description
@@ -88,6 +93,9 @@ class SerialManager(QObject):
             port_action.checkable = True
             port_action.checked = port == self.selected_port
             port_action.triggered.connect(partial(lambda p: self.select_port(p), p=port))
+
+
+
 
     def toggle_start_stop(self):
         if self.bus:
@@ -106,12 +114,17 @@ class SerialManager(QObject):
         self.bus_state_changed.emit(False)
 
     def start(self):
+        if self.selected_port is None:
+            self.menu_start.enabled = False
+            return
+
         self.menu_start.text = "Stop"
         self.menu_ports.enabled = False
 
         self.bus = Bus(self.selected_port)
         self.bus.error_occurred.connect(self.bus_error_occurred)
         self.bus.frame_received.connect(self.bus_frame_received)
+        self.bus.start()
 
         self.bus_state_changed.emit(True)
 
@@ -123,6 +136,5 @@ class SerialManager(QObject):
         self.frame_received.emit(frame)
 
     def bus_error_occurred(self, e):
-        pass
-        # self.stop()
-        # self.error_occurred.emit(e)
+        self.error_occurred.emit(e)
+        self.stop()

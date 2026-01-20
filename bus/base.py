@@ -16,15 +16,43 @@ class Bus(QObject):
         from __feature__ import snake_case, true_property  # noqa
         super().__init__()
 
+        self.port = port
         self.serial = None
         self.receive_buffer = bytearray()
         self.transmit_queue = []
         self.processing = False
         self.transmitting = False
 
+        self.transmit_thread = None
+        self.process_thread = None
+        self.receive_thread = None
+
+    def thread_error_occurred(self, e):
+        self.error_occurred.emit(e)
+
+    def data_received(self, data):
+        self.receive_buffer.extend(data)
+
+        if not self.processing:
+            self.processing = True
+            self.process_thread.start(QThread.Priority.TimeCriticalPriority)
+
+    def thread_frame_received(self, frame):
+        self.frame_received.emit(frame)
+
+    def processing_finished(self):
+        self.processing = False
+
+    def transmitting_finished(self):
+        self.transmitting = False
+
+    def start(self):
+        if self.port is None:
+            return
+
         try:
             self.serial = Serial(
-                port=port.device,
+                port=self.port.device,
                 baudrate=9600,
                 bytesize=EIGHTBITS,
                 parity=PARITY_EVEN,
@@ -50,38 +78,24 @@ class Bus(QObject):
             self.error_occurred.emit(e)
             return
 
-    def thread_error_occurred(self, e):
-        self.error_occurred.emit(e)
-
-    def data_received(self, data):
-        self.receive_buffer.extend(data)
-
-        if not self.processing:
-            self.processing = True
-            self.process_thread.start(QThread.Priority.TimeCriticalPriority)
-
-    def thread_frame_received(self, frame):
-        self.frame_received.emit(frame)
-
-    def processing_finished(self):
-        self.processing = False
-
-    def transmitting_finished(self):
-        self.transmitting = False
-
     def stop(self):
         if self.serial and self.serial.is_open:
             self.serial.close()
 
-        print("Stopping Threads...")
-        self.transmit_thread.request_interruption()
-        self.transmit_thread.wait()
+        if self.transmit_thread:
+           self.transmit_thread.request_interruption()
+           self.transmit_thread.wait()
+           self.transmit_thread.delete_later()
 
-        self.process_thread.request_interruption()
-        self.process_thread.wait()
+        if self.process_thread:
+            self.process_thread.request_interruption()
+            self.process_thread.wait()
+            self.process_thread.delete_later()
 
-        self.receive_thread.request_interruption()
-        self.receive_thread.wait()
+        if self.receive_thread:
+            self.receive_thread.request_interruption()
+            self.receive_thread.wait()
+            self.receive_thread.delete_later()
 
     def transmit_frame(self, frame):
         self.transmit_queue.append(frame)

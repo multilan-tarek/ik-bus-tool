@@ -24,7 +24,7 @@ class TextConverter(QDialog):
         self.encoded_data_copy = QPushButton("Copy")
         self.encoded_data_copy.clicked.connect(self.copy_encoded_data)
 
-        self.display = DisplayWidget(pixel_spacing=1, pixel_size=5, padding=2)
+        self.display = DisplayWidget(pixel_spacing=1, pixel_size=5, padding=2, char_count=30)
 
         preview = QGroupBox("Display Preview")
         preview_layout = QHBoxLayout(preview)
