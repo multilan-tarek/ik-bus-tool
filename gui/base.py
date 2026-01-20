@@ -3,10 +3,12 @@ from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QGroupBox, QTab
     QAbstractItemView, QTableWidgetItem, QFileDialog, QMessageBox
 
 from bus.frame import BusFrame
-from gui.helper import get_logo
+from gui.about import About
+from gui.helper import get_logo, open_url
 from gui.ike_simulation import IkeSimulation
+from gui.tools.charset_browser import CharsetBrowser
 from gui.tools.scanner import Scanner
-from gui.serial import SerialManager
+from gui.serial_manager import SerialManager
 from gui.tools.text_converter import TextConverter
 from gui.transmit_area import TransmitArea
 
@@ -27,6 +29,8 @@ class GUI(QMainWindow):
         self.ike_simulation = IkeSimulation(self)
         self.scanner = Scanner(self)
         self.text_converter = TextConverter(self)
+        self.charset_browser = CharsetBrowser(self)
+        self.about = About(self)
 
 
 
@@ -95,43 +99,41 @@ class GUI(QMainWindow):
         menu_bar = self.menu_bar()
 
         menu_file = menu_bar.add_menu("&File")
-
         menu_file_open_bin = menu_file.add_action("Open BIN")
         menu_file_open_bin.triggered.connect(self.open_bin)
-
         menu_file.add_separator()
-
         menu_file_save_bin = menu_file.add_action("Save as BIN")
         menu_file_save_bin.triggered.connect(self.save_as_bin)
-
         menu_file_save_text = menu_file.add_action("Save as Text")
         menu_file_save_text.triggered.connect(self.save_as_text)
-
         menu_file_save_hex = menu_file.add_action("Save as Hex")
         menu_file_save_hex.triggered.connect(self.save_as_hex)
-
         menu_file.add_separator()
-
         menu_file_clear = menu_file.add_action("Clear")
         menu_file_clear.triggered.connect(self.clear_table)
-
         menu_file.add_separator()
-
         menu_file_close = menu_file.add_action("Close")
         menu_file_close.triggered.connect(lambda: exit())
 
         self.serial_manager.init_menu(menu_bar)
         menu_sim = menu_bar.add_menu("&Simulation")
-        menu_tools = menu_bar.add_menu("&Tools")
-        menu_help = menu_bar.add_menu("&Help")
 
+
+        menu_tools = menu_bar.add_menu("&Tools")
         menu_tools_text_conv = menu_tools.add_action("Text Converter")
         menu_tools_text_conv.triggered.connect(lambda: self.text_converter.show())
-
-        menu_tools_scanner = menu_tools.add_action("Scanner")
+        menu_tools_charset_browser = menu_tools.add_action("Charset Browser")
+        menu_tools_charset_browser.triggered.connect(lambda: self.charset_browser.show())
+        menu_tools_scanner = menu_tools.add_action("Bus Scanner")
         menu_tools_scanner.triggered.connect(lambda: self.scanner.show())
 
 
+        menu_help = menu_bar.add_menu("&Help")
+        menu_help_more_docs = menu_help.add_action("More Documentation")
+        menu_help_more_docs.triggered.connect(lambda: open_url("https://github.com/piersholt/wilhelm-docs"))
+        menu_help.add_separator()
+        menu_help_about = menu_help.add_action("About I/K-Bus Tool")
+        menu_help_about.triggered.connect(lambda: self.about.show())
 
         menu_ike_sim = menu_sim.add_action("IKE/KMB")
         menu_ike_sim.triggered.connect(lambda: self.ike_simulation.show())

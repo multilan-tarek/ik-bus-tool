@@ -1,5 +1,7 @@
 import base64
-from PySide6.QtGui import QPixmap
+
+from PySide6.QtCore import QUrl
+from PySide6.QtGui import QPixmap, QDesktopServices
 import re
 import unicodedata
 
@@ -27,3 +29,6 @@ def encode_string(string):
 
 def decode_string(data):
     return data.replace(b"\n", b"").replace(b"\r", b"").decode("latin-1", errors="ignore")
+
+def open_url(url):
+    QDesktopServices.open_url(QUrl(url))

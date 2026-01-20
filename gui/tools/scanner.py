@@ -51,7 +51,7 @@ class Scanner(QDialog):
 
         self.found_devices = []
 
-        self.window_title = "Scanner"
+        self.window_title = "Bus Scanner"
         self.window_icon = QIcon(get_logo())
         self.set_fixed_size(400, 400)
 

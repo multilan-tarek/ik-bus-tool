@@ -2,7 +2,6 @@ import json
 import os.path
 from PySide6.QtWidgets import QWidget
 from PySide6.QtGui import  QPainter,  QColor
-from gui.helper import encode_string
 
 
 class DisplayWidget(QWidget):
@@ -102,3 +101,5 @@ class DisplayWidget(QWidget):
 
         if self.check_control:
             self.draw_arrows(p)
+
+        p.end()
