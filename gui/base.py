@@ -44,8 +44,7 @@ class GUI(QMainWindow):
         self.set_central_widget(main_widget)
         main_layout = QVBoxLayout(main_widget)
 
-
-
+        main_layout.add_spacing(8)
         main_layout.add_widget(TransmitArea(self.config, self.serial_manager))
         main_layout.add_spacing(8)
         main_layout.add_widget(self.init_filter_area())
@@ -53,7 +52,7 @@ class GUI(QMainWindow):
         main_layout.add_widget(self.init_receive_area())
 
         self.init_menu_bar()
-        self.init_status_bar()
+        #self.init_status_bar()
 
         #self.minimum_size = main_layout.size_hint()
         self.set_fixed_width(1200)

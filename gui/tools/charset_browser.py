@@ -12,6 +12,8 @@ class DisplayWidgetWrapper(DisplayWidget):
 
     def hide_copied_overlay(self):
         self.copied_overlay = False
+        self.pressed_down = False
+        self.mouse_hovering = False
         self.repaint()
 
     def enter_event(self, event):
@@ -19,6 +21,7 @@ class DisplayWidgetWrapper(DisplayWidget):
         self.repaint()
 
     def leave_event(self, event):
+        self.pressed_down = False
         self.mouse_hovering = False
         self.repaint()
 
@@ -55,18 +58,18 @@ class DisplayWidgetWrapper(DisplayWidget):
                 text = f"0x{self.data.hex().upper()}"
                 font_size = 18
 
-            font = QFontDatabase.system_font(QFontDatabase.SystemFont.FixedFont)
+            font = QFontDatabase.system_font(QFontDatabase.SystemFont.GeneralFont)
             font.set_point_size(font_size)
 
             p.set_font(font)
             p.set_pen(QColor(255, 255, 255))
             p.draw_text(self.rect, Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignHCenter, text)
 
-
         if self.pressed_down:
             p.fill_rect(0, 0, self.width, self.height, QColor.from_rgba(qRgba(0, 0, 0, 40)))
 
         p.end()
+
 
 class CharsetBrowser(QDialog):
     def __init__(self, main_window):
