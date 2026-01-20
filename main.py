@@ -4,9 +4,9 @@ import time
 import traceback
 from functools import partial
 import serial
-from PyQt6.QtCore import QThread, pyqtSignal, QTimer, Qt
-from PyQt6.QtGui import QIcon, QPixmap
-from PyQt6.QtWidgets import QApplication, QWidget, QComboBox, QGridLayout, QPushButton, QTableWidget, QTableWidgetItem, QAbstractItemView, QCheckBox, QFileDialog, QMessageBox, QLineEdit, QHBoxLayout, QLabel, QProgressBar, QGroupBox, QVBoxLayout, QSpinBox, QMainWindow
+from PySide6.QtCore import QThread, Signal, QTimer, Qt
+from PySide6.QtGui import QIcon, QPixmap
+from PySide6.QtWidgets import QApplication, QWidget, QComboBox, QGridLayout, QPushButton, QTableWidget, QTableWidgetItem, QAbstractItemView, QCheckBox, QFileDialog, QMessageBox, QLineEdit, QHBoxLayout, QLabel, QProgressBar, QGroupBox, QVBoxLayout, QSpinBox, QMainWindow
 import logging
 import sys
 import serial.tools.list_ports
@@ -196,13 +196,12 @@ commands = {
     0xaa: "Nav Control",
     0xab: "Remote Control Status",
     0xd4: "NG-RAD Station List"
-
 }
 
 
 class IBusWrite(QThread):
-    error_signal = pyqtSignal()
-    buffer_update_signal = pyqtSignal()
+    error_signal = Signal()
+    buffer_update_signal = Signal()
 
     def __init__(self, ibus_main):
         self.main = ibus_main
@@ -245,8 +244,8 @@ class IBusWrite(QThread):
 
 
 class IBusRead(QThread):
-    error_signal = pyqtSignal()
-    buffer_update_signal = pyqtSignal()
+    error_signal = Signal()
+    buffer_update_signal = Signal()
 
     def __init__(self, ibus_main):
         self.main = ibus_main
@@ -269,8 +268,8 @@ class IBusRead(QThread):
 
 
 class IBusProcess(QThread):
-    signal = pyqtSignal(dict)
-    buffer_update_signal = pyqtSignal()
+    signal = Signal(dict)
+    buffer_update_signal = Signal()
 
     def __init__(self, ibus_main):
         self.main = ibus_main
@@ -390,7 +389,9 @@ class Main(QMainWindow):
         super().__init__()
         self.setWindowTitle("I/K-Bus Tool")
         self.setWindowIcon(QIcon(self.get_logo()))
+
         self.show()
+
 
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
@@ -912,6 +913,9 @@ class Main(QMainWindow):
             dest_dev = packet[2]
             message_type = packet[3]
 
+            # if message_type not in [0xab]:
+            #     return None, None, None, None
+
             if source_dev in devs.keys():
                 source_dev_name = devs[source_dev]
             if dest_dev in devs.keys():
@@ -924,17 +928,21 @@ class Main(QMainWindow):
             return source_dev_name, dest_dev_name, message_name, formatted_line
 
         except IndexError:
-            return None
+            return None, None, None, None
 
     def add_data(self, packet):
         if packet:
+            source_dev, dest_dev, message_name, message = self.parse_packet(packet)
+
+            if source_dev is None:
+                return
+
             self.save_hex_button.setEnabled(True)
             self.save_bin_button.setEnabled(True)
             self.save_text_button.setEnabled(True)
             self.clear_button.setEnabled(True)
             self.data.append(packet)
 
-            source_dev, dest_dev, message_name, message = self.parse_packet(packet)
             row = self.output.rowCount()
             decoded = packet[3:-1].replace(b"\n", b"").replace(b"\r", b"").decode("ascii", errors="ignore")
             self.output.insertRow(row)
