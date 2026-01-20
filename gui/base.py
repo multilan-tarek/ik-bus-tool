@@ -1,10 +1,13 @@
-from PySide6.QtCore import QMargins
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QGridLayout, QGroupBox, QTableWidget, \
-    QAbstractItemView, QCheckBox, QProgressBar, QTableWidgetItem, QHBoxLayout, QHBoxLayout, QComboBox
+from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QGroupBox, QTableWidget, \
+    QAbstractItemView, QTableWidgetItem, QFileDialog, QMessageBox
+
+from bus.frame import BusFrame
 from gui.helper import get_logo
 from gui.ike_simulation import IkeSimulation
+from gui.tools.scanner import Scanner
 from gui.serial import SerialManager
+from gui.tools.text_converter import TextConverter
 from gui.transmit_area import TransmitArea
 
 
@@ -14,7 +17,7 @@ class GUI(QMainWindow):
         super().__init__()
 
         self.config = application.config
-
+        self.frame_log = []
         self.table = None
 
         self.serial_manager = SerialManager(self.config)
@@ -22,6 +25,8 @@ class GUI(QMainWindow):
         application.quit_event.connect(self.serial_manager.stop)
 
         self.ike_simulation = IkeSimulation(self)
+        self.scanner = Scanner(self)
+        self.text_converter = TextConverter(self)
 
 
 
@@ -52,16 +57,17 @@ class GUI(QMainWindow):
         self.show()
 
     def frame_received(self, frame):
+        self.frame_log.append(frame)
+
         table_row = self.table.row_count
-        decoded_data = frame.data.replace(b"\n", b"").replace(b"\r", b"").decode("ascii", errors="ignore")
 
         self.table.insert_row(table_row)
         self.table.set_row_height(table_row, 18)
         self.table.set_item(table_row, 0, QTableWidgetItem(frame.source_str))
         self.table.set_item(table_row, 1, QTableWidgetItem(frame.dest_str))
         self.table.set_item(table_row, 2, QTableWidgetItem(frame.cmd_str))
-        self.table.set_item(table_row, 3, QTableWidgetItem(decoded_data))
-        self.table.set_item(table_row, 4, QTableWidgetItem(str(frame)))
+        self.table.set_item(table_row, 3, QTableWidgetItem(str(frame)))
+        self.table.set_item(table_row, 4, QTableWidgetItem(frame.raw_hex))
 
         self.table.scroll_to_bottom()
 
@@ -89,33 +95,46 @@ class GUI(QMainWindow):
         menu_bar = self.menu_bar()
 
         menu_file = menu_bar.add_menu("&File")
-        menu_file_open_bin = menu_file.add_action("Open Binary")
+
+        menu_file_open_bin = menu_file.add_action("Open BIN")
+        menu_file_open_bin.triggered.connect(self.open_bin)
 
         menu_file.add_separator()
 
-        menu_file_save_bin = menu_file.add_action("Save as Binary")
+        menu_file_save_bin = menu_file.add_action("Save as BIN")
+        menu_file_save_bin.triggered.connect(self.save_as_bin)
+
         menu_file_save_text = menu_file.add_action("Save as Text")
-        menu_file_save_hex = menu_file.add_action("Save as HEX")
+        menu_file_save_text.triggered.connect(self.save_as_text)
+
+        menu_file_save_hex = menu_file.add_action("Save as Hex")
+        menu_file_save_hex.triggered.connect(self.save_as_hex)
 
         menu_file.add_separator()
 
         menu_file_clear = menu_file.add_action("Clear")
+        menu_file_clear.triggered.connect(self.clear_table)
 
         menu_file.add_separator()
 
         menu_file_close = menu_file.add_action("Close")
         menu_file_close.triggered.connect(lambda: exit())
 
-
         self.serial_manager.init_menu(menu_bar)
         menu_sim = menu_bar.add_menu("&Simulation")
         menu_tools = menu_bar.add_menu("&Tools")
         menu_help = menu_bar.add_menu("&Help")
 
-        menu_tools_text_conv = menu_tools.add_action("Text Conversion")
+        menu_tools_text_conv = menu_tools.add_action("Text Converter")
+        menu_tools_text_conv.triggered.connect(lambda: self.text_converter.show())
+
+        menu_tools_scanner = menu_tools.add_action("Scanner")
+        menu_tools_scanner.triggered.connect(lambda: self.scanner.show())
+
+
 
         menu_ike_sim = menu_sim.add_action("IKE/KMB")
-        menu_ike_sim.triggered.connect(lambda: self.ike_simulation.open())
+        menu_ike_sim.triggered.connect(lambda: self.ike_simulation.show())
 
     def init_status_bar(self):
         status_bar = self.status_bar()
@@ -132,3 +151,99 @@ class GUI(QMainWindow):
         #self.write_buffer_fill.value = 0
         #self.write_buffer_fill.text_visible = False
         #status_bar.add_permanent_widget(self.write_buffer_fill)
+
+    def open_bin(self):
+        file_path = QFileDialog.get_open_file_name(self, "Open BIN", filter="Binary Files (*.bin);;All Files (*)")[0]
+
+        if not file_path:
+            return
+
+        with open(file_path, "rb") as file:
+            data = file.read()
+
+        self.table.clear_contents()
+        self.table.row_count = 0
+
+        try:
+            while len(data):
+                length = data[1]
+                frame_length = length + 2
+
+                if length < 2:
+                    raise SyntaxError
+
+                if frame_length > len(data):
+                    break
+
+                frame_data = data[:frame_length]
+
+                checksum = frame_data[-1]
+                checksum_bytes = frame_data[:-1]
+
+                checksum_calced = 0
+                for byte in checksum_bytes:
+                    checksum_calced ^= byte
+
+                if checksum != checksum_calced:
+                    raise SyntaxError
+
+                frame = BusFrame.from_data(frame_data)
+                self.frame_received(frame)
+                data = data[frame_length:]
+
+        except SyntaxError:
+            QMessageBox.information(self, "Error", "The selected file is corrupted")
+            return
+
+        QMessageBox.information(self, "File saved", "File successfully loaded")
+
+
+    def save_as_bin(self):
+        file_path = QFileDialog.get_save_file_name(self, "Save as BIN", filter="Binary Files (*.bin);;All Files (*)")[0]
+
+        if not file_path:
+            return
+
+        with open(file_path, "wb") as file:
+            for frame in self.frame_log:
+                file.write(frame.raw)
+
+        QMessageBox.information(self, "File saved", "File successfully saved as BIN")
+
+    def save_as_text(self):
+        file_path = QFileDialog.get_save_file_name(self, "Save as Text", filter="Text Files (*.txt);;All Files (*)")[0]
+
+        if not file_path:
+            return
+
+        with open(file_path, "w") as file:
+            for frame in self.frame_log:
+                line = f"[{frame.source_str} -> {frame.dest_str}] [{frame.cmd_str}]: {frame.raw_hex} ({str(frame)})\r\n"
+                file.write(line)
+
+        QMessageBox.information(self, "File saved", "File successfully saved as Text")
+
+    def save_as_hex(self):
+        file_path = QFileDialog.get_save_file_name(self, "Save as Hex", filter="Text Files (*.txt);;All Files (*)")[0]
+
+        if not file_path:
+            return
+
+        with open(file_path, "w") as file:
+            for frame in self.frame_log:
+                file.write(f"{frame.raw_hex}\r\n")
+
+        QMessageBox.information(self, "File saved", "File successfully saved as Hex")
+
+    def clear_table(self):
+        clear_question = QMessageBox(self)
+        clear_question.window_title = "Clear data?"
+        clear_question.text = "Do you want to clear the existing data?"
+        clear_question.standard_buttons = QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        clear_question.icon = QMessageBox.Icon.Question
+        result = clear_question.exec()
+
+        if result == QMessageBox.StandardButton.Yes:
+            self.frame_log.clear()
+            self.table.clear_contents()
+            self.table.row_count = 0

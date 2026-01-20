@@ -1,28 +1,32 @@
 import traceback
-from PySide6.QtWidgets import QDialog, QGridLayout, QComboBox, QGroupBox, QLabel, QCheckBox, QSpinBox, QApplication
+from PySide6.QtWidgets import QDialog, QGridLayout, QComboBox, QGroupBox, QLabel, QCheckBox, QSpinBox, QDoubleSpinBox, QTimeEdit, QDateEdit, QPushButton
 from PySide6.QtGui import QIcon
-from PySide6.QtCore import Qt, QCoreApplication
+from PySide6.QtCore import Qt, QEvent, QTime, QDate
 from bus.frame import BusFrame
+from gui.widgets.display import DisplayWidget
 from gui.helper import get_logo, slugify
 
 
 class SimulationInput:
+    fire_on_change = False
+
     def __init__(self, area, title, on_change):
-        self.fire_on_change = False
         self.area = area
-        self.on_change_overwrite = on_change
+        self._on_change_func = on_change
         self.config = area.config
         self.config_name = f"{area.main.config_prefix}_{area.config_prefix}_{slugify(title)}"
         self.val = getattr(self.config, self.config_name)
         self.fire_on_change = True
+        self.trigger_on_change = True
 
     def on_change(self):
-        if not self.fire_on_change:
+        if not self.fire_on_change or not self.trigger_on_change:
             return
 
-        if self.on_change_overwrite:
-            self.on_change_overwrite(self)
-        else:
+        if self._on_change_func:
+            self._on_change_func(self)
+
+        if self.area.on_input_change:
             self.area.on_input_change(self)
 
         setattr(self.config, self.config_name, self.val)
@@ -31,8 +35,16 @@ class SimulationInput:
     def val(self):
         return None
 
+    @property
+    def val_raw(self):
+        return None
+
     @val.setter
     def val(self, value):
+        pass
+
+    @val_raw.setter
+    def val_raw(self, value):
         pass
 
 
@@ -73,12 +85,13 @@ class SimulationNumberInput(SimulationInput, QSpinBox):
 
         SimulationInput.__init__(self, area, title, on_change)
 
-    def on_change(self):
-        super().on_change()
-
     @property
     def val(self):
         return self.value
+
+    @property
+    def val_raw(self):
+        return self.val
 
     @val.setter
     def val(self, value):
@@ -86,6 +99,121 @@ class SimulationNumberInput(SimulationInput, QSpinBox):
             return
 
         self.value = value
+
+    @val_raw.setter
+    def val_raw(self, value):
+        self.val = value
+
+
+class SimulationFloatInput(SimulationInput, QDoubleSpinBox):
+    def __init__(self, area: SimulationArea, title, min_val=0, max_val=100, val_step=0.1, val_decimals=1, on_change=None):
+        from __feature__ import snake_case, true_property  # noqa
+        QDoubleSpinBox.__init__(self)
+
+        self.valueChanged.connect(self.on_change)
+
+        index = area.input_index
+        area.layout.add_widget(QLabel(title), index, 0)
+        area.layout.add_widget(self, index, 1)
+        area.input_index += 1
+
+        self.minimum = min_val
+        self.maximum = max_val
+        self.decimals = val_decimals
+        self.single_step = val_step
+
+        SimulationInput.__init__(self, area, title, on_change)
+
+    @property
+    def val(self):
+        return self.value
+
+    @property
+    def val_raw(self):
+        return self.val
+
+    @val.setter
+    def val(self, value):
+        if value is None:
+            return
+
+        self.value = value
+
+    @val_raw.setter
+    def val_raw(self, value):
+        self.val = value
+
+
+class SimulationTimeInput(SimulationInput, QTimeEdit):
+    def __init__(self, area: SimulationArea, title, on_change=None):
+        from __feature__ import snake_case, true_property  # noqa
+        QTimeEdit.__init__(self)
+
+        self.timeChanged.connect(self.on_change)
+
+        index = area.input_index
+        area.layout.add_widget(QLabel(title), index, 0)
+        area.layout.add_widget(self, index, 1)
+        area.input_index += 1
+
+        self.display_format = "HH:mm"
+
+        SimulationInput.__init__(self, area, title, on_change)
+
+    @property
+    def val(self):
+        return self.time.to_string("HH-mm")
+
+    @property
+    def val_raw(self):
+        return self.val
+
+    @val.setter
+    def val(self, value):
+        if value is None:
+            return
+
+        self.time = QTime.from_string(value, "HH-mm")
+
+    @val_raw.setter
+    def val_raw(self, value):
+        self.val = value
+
+
+class SimulationDateInput(SimulationInput, QDateEdit):
+    def __init__(self, area: SimulationArea, title, on_change=None):
+        from __feature__ import snake_case, true_property  # noqa
+        QDateEdit.__init__(self)
+
+        self.dateChanged.connect(self.on_change)
+
+        index = area.input_index
+        area.layout.add_widget(QLabel(title), index, 0)
+        area.layout.add_widget(self, index, 1)
+        area.input_index += 1
+
+        self.display_format = "dd.MM.yyyy"
+
+        SimulationInput.__init__(self, area, title, on_change)
+
+    @property
+    def val(self):
+        return self.date.to_string("dd-MM-yyyy")
+
+    @property
+    def val_raw(self):
+        return self.val
+
+    @val.setter
+    def val(self, value):
+        if value is None:
+            return
+
+        self.date = QDate.from_string(value, "dd-MM-yyyy")
+
+    @val_raw.setter
+    def val_raw(self, value):
+        self.val = value
 
 
 class SimulationSelectInput(SimulationInput, QComboBox):
@@ -105,20 +233,28 @@ class SimulationSelectInput(SimulationInput, QComboBox):
 
         SimulationInput.__init__(self, area, title, on_change)
 
-    def on_change(self):
-        super().on_change()
-
     @property
     def val(self):
-        value = self.items.get(self.current_text)
+        value = self.val_raw
 
         if value is None or not self.bit_shift:
             return value
 
-        return value * 2 ** self.bit_shift
+        return value * (2 ** self.bit_shift)
+
+    @property
+    def val_raw(self):
+        return self.items.get(self.current_text)
 
     @val.setter
     def val(self, value):
+        if value is None:
+            return
+
+        self.val_raw = value // (2 ** self.bit_shift)
+
+    @val_raw.setter
+    def val_raw(self, value):
         if value is None:
             return
 
@@ -137,7 +273,7 @@ class SimulationSelectInput(SimulationInput, QComboBox):
 
 
 class SimulationCheckBoxInput(SimulationInput, QCheckBox):
-    def __init__(self, area: SimulationArea, title, checked_value, on_change=None):
+    def __init__(self, area: SimulationArea, title, checked_value=1, on_change=None):
         from __feature__ import snake_case, true_property  # noqa
         QCheckBox.__init__(self)
 
@@ -150,9 +286,6 @@ class SimulationCheckBoxInput(SimulationInput, QCheckBox):
 
         SimulationInput.__init__(self, area, title, on_change)
 
-    def on_change(self):
-        super().on_change()
-
     @property
     def val(self):
         if self.checked:
@@ -160,12 +293,46 @@ class SimulationCheckBoxInput(SimulationInput, QCheckBox):
 
         return 0x00
 
+    @property
+    def val_raw(self):
+        return self.val
+
     @val.setter
     def val(self, value):
         if value is None:
             return
 
         self.checked = value == self.checked_value
+
+    @val_raw.setter
+    def val_raw(self, value):
+        self.val = value
+
+
+class SimulationButtonInput(QPushButton):
+    def __init__(self, area: SimulationArea, text, on_press=None, on_release=None):
+        from __feature__ import snake_case, true_property  # noqa
+        QPushButton.__init__(self)
+
+        self.text = text
+
+        if on_press:
+            self.pressed.connect(on_press)
+
+        if on_release:
+            self.released.connect(on_release)
+
+        area.layout.add_widget(self, area.input_index, 0)
+        area.input_index += 1
+
+
+class SimulationDisplay(DisplayWidget):
+    def __init__(self, area: SimulationArea):
+        from __feature__ import snake_case, true_property  # noqa
+        DisplayWidget.__init__(self, char_count=20, check_control=True)
+
+        area.layout.add_widget(self, area.input_index, 0)
+        area.input_index += 1
 
 
 class SimulationBase(QDialog):
@@ -188,11 +355,16 @@ class SimulationBase(QDialog):
         self.layout = QGridLayout(self)
         self.layout.set_alignment(Qt.AlignTop | Qt.AlignHCenter)
 
-        app = QApplication.instance()
-        app.aboutToQuit.connect(self._app_quiting)
+        main_window.install_event_filter(self)
 
         if getattr(self.config, f"{self.config_prefix}_open"):
-            self.open()
+            self.show()
+
+    def event_filter(self, obj, ev):
+        if obj is self.parent() and ev.type() == QEvent.Close:
+            setattr(self.config, f"{self.config_prefix}_open", self.visible)
+
+        return False
 
     def _frame_received(self, frame):
         if frame.dest not in self.device_id_filters or frame.cmd not in self.frame_routing.keys():
@@ -215,7 +387,7 @@ class SimulationBase(QDialog):
         frame = BusFrame(self.device_id, frame.source, 0x02, [self.device_variant])
         self.serial_manager.transmit_frame(frame)
 
-    def open(self):
+    def show_event(self, e):
         self.serial_manager.frame_received.connect(self._frame_received)
         self.serial_manager.bus_state_changed.connect(self._bus_state_changed)
         self.show()
@@ -223,7 +395,7 @@ class SimulationBase(QDialog):
         if self.bus_active:
             self.announce()
 
-        setattr(self.config, f"{self.config_prefix}_open", True)
+        super().show_event(e)
 
     @staticmethod
     def build_byte(*inputs):
@@ -231,22 +403,3 @@ class SimulationBase(QDialog):
         for i in inputs:
             byte |= i.val
         return byte
-
-    def _app_quiting(self):
-        print(self.visible)
-
-        #setattr(self.config, f"{self.config_prefix}_open", True)
-
-    def close_event(self, event):
-
-        #print(QCoreApplication.closingDown())
-#
-        #setattr(self.config, f"{self.config_prefix}_open", False)
-        self.hide()
-        event.ignore()
-
-    def hide_event(self, e):
-        print("HIDE")
-        e.ignore()
-        return
-        super().hide_event(e)

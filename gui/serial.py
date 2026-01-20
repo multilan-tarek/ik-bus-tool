@@ -48,7 +48,7 @@ class SerialManager(QObject):
         self.menu = menu_bar.add_menu("&Serial")
 
         self.menu_start = self.menu.add_action("Start")
-        self.menu_start.triggered.connect(lambda: self.start())
+        self.menu_start.triggered.connect(lambda: self.toggle_start_stop())
 
         self.menu_auto_start = self.menu.add_action("Auto Start")
         self.menu_auto_start.checkable = True
@@ -89,19 +89,24 @@ class SerialManager(QObject):
             port_action.checked = port == self.selected_port
             port_action.triggered.connect(partial(lambda p: self.select_port(p), p=port))
 
+    def toggle_start_stop(self):
+        if self.bus:
+            self.stop()
+        else:
+            self.start()
+
     def stop(self):
         self.menu_start.text = "Start"
-        self.menu_start.triggered.connect(lambda: self.start())
         self.menu_ports.enabled = True
 
         if self.bus:
             self.bus.stop()
+            self.bus = None
 
         self.bus_state_changed.emit(False)
 
     def start(self):
         self.menu_start.text = "Stop"
-        self.menu_start.triggered.connect(lambda: self.stop())
         self.menu_ports.enabled = False
 
         self.bus = Bus(self.selected_port)

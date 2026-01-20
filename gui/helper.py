@@ -22,4 +22,8 @@ def get_logo():
     pixmap.load_from_data(image_data)
     return pixmap
 
+def encode_string(string):
+    return bytearray(string.encode("latin-1", "replace"))
 
+def decode_string(data):
+    return data.replace(b"\n", b"").replace(b"\r", b"").decode("latin-1", errors="ignore")

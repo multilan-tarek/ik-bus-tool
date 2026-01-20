@@ -28,7 +28,8 @@ class Bus(QObject):
                 baudrate=9600,
                 bytesize=EIGHTBITS,
                 parity=PARITY_EVEN,
-                stopbits=STOPBITS_ONE
+                stopbits=STOPBITS_ONE,
+                timeout=0.1
             )
 
             self.transmit_thread = BusTransmit(self.transmit_queue, self.serial)
@@ -74,15 +75,12 @@ class Bus(QObject):
 
         print("Stopping Threads...")
         self.transmit_thread.request_interruption()
-        self.transmit_thread.quit()
         self.transmit_thread.wait()
 
         self.process_thread.request_interruption()
-        self.process_thread.quit()
         self.process_thread.wait()
 
         self.receive_thread.request_interruption()
-        self.receive_thread.quit()
         self.receive_thread.wait()
 
     def transmit_frame(self, frame):

@@ -2,6 +2,7 @@ from PySide6.QtCore import QThread, Signal
 from serial.serialutil import SerialException
 import time
 
+
 class BusTransmit(QThread):
     error_occurred = Signal()
 
@@ -21,18 +22,20 @@ class BusTransmit(QThread):
                         self.serial.flush()
                         break
 
-                        #timeout_counter = 0
-                        #while self.main.waiting_for_packet is not None:
+                        # timeout_counter = 0
+                        # while self.main.waiting_for_packet is not None:
                         #    if timeout_counter > 100:
                         #        break
                         #    timeout_counter += 1
                         #    time.sleep(0.01)
-#
-                        #if timeout_counter <= 100:
-                        #    break
+                #
+                # if timeout_counter <= 100:
+                #    break
 
-                time.sleep(0.05)
-
+                for _ in range(50):
+                    if self.is_interruption_requested():
+                        return
+                    self.msleep(10)
 
         except SerialException:
             self.error_occurred.emit()

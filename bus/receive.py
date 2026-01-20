@@ -18,6 +18,9 @@ class BusReceive(QThread):
 
                 data = self.serial.read()
 
+                if self.is_interruption_requested():
+                    return
+
                 if data:
                     self.data_received.emit(data)
 

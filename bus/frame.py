@@ -1,5 +1,7 @@
 from copy import copy
 
+from gui.helper import decode_string
+
 BUS_DEVICES = {
     0x00: "GM",
     0x01: "MID1",
@@ -65,17 +67,18 @@ BUS_DEVICES = {
     0xf1: "PIC",
     0xf5: "SZM",
     0xff: "Broadcast",
+    0xfe: "I/K-Bus Tool"
 }
 
 BUS_COMMANDS = {
     0x01: "Device Ping",
     0x02: "Device Announce",
-   # 0x03: "Bus Status Request",
-   # 0x04: "Bus Status",
-   # 0x05: "Backlight Control",
-   # 0x06: "Identification",
-   # 0x07: "Gong status",
-   # 0x0c: "Vehicle control",
+    # 0x03: "Bus Status Request",
+    # 0x04: "Bus Status",
+    # 0x05: "Backlight Control",
+    # 0x06: "Identification",
+    # 0x07: "Gong status",
+    # 0x0c: "Vehicle control",
     0x10: "Ignition Status Request",
     0x11: "Ignition Status",
     0x12: "Sensor Status Request",
@@ -88,7 +91,7 @@ BUS_COMMANDS = {
     0x19: "Temperature",
     0x1a: "Check Control Message",
     0x1b: "Check Control Priority",
-    #0x1c: "Gong",
+    # 0x1c: "Gong",
     0x1d: "Temperature Request",
     0x1f: "GPS Time & Date",
     0x20: "MID Button",
@@ -96,30 +99,30 @@ BUS_COMMANDS = {
     0x22: "Display Confirmation",
     0x23: "Title Text",
     0x24: "Update Title Text",
-    #0x27: "MID display request",
-    #0x28: "MID denied access",
-    #0x29: "Report MID display",
-    #0x2a: "OBC Special Indicators",
+    # 0x27: "MID display request",
+    # 0x28: "MID denied access",
+    # 0x29: "Report MID display",
+    # 0x2a: "OBC Special Indicators",
     0x2b: "Phone LEDs",
     0x2c: "Phone Status",
     0x2d: "Phone Dial",
-    #0x31: "Button",
+    # 0x31: "Button",
     0x32: "Volume Control",
-    #0x33: "Part number status",
+    # 0x33: "Part number status",
     0x34: "DSP Control",
-    #0x35: "Car memory response",
+    # 0x35: "Car memory response",
     0x36: "Tone Control",
     0x37: "Select/Tone Menu",
     0x38: "CDC Control",
     0x39: "CDC Status",
-    #0x3a: "Recirculating air control",
+    # 0x3a: "Recirculating air control",
     0x3b: "MFL Button",
     0x3c: "DSP Preset Control",
     0x40: "BC Input",
     0x41: "BC Control",
     0x42: "BC Remote Settings",
-    #0x43: "Mono display",
-    #0x44: "E46 IKE text",
+    # 0x43: "Mono display",
+    # 0x44: "E46 IKE text",
     0x45: "Radio UI Control",
     0x46: "Radio UI Request",
     0x47: "BM Button",
@@ -135,29 +138,29 @@ BUS_COMMANDS = {
     0x53: "Vehicle Data Request",
     0x54: "Vehicle Data",
     0x55: "Service Interval Data",
-    #0x56: "Light control status request",
+    # 0x56: "Light control status request",
     0x57: "Cluster Button",
-    #0x58: "Headlight wipe interval",
+    # 0x58: "Headlight wipe interval",
     0x59: "Light Sensor Status",
     0x5a: "Cluster Indicators Request",
     0x5b: "Cluster Indicators",
     0x5c: "Backlight Status",
     0x5d: "Backlight Status Request",
-    #0x5e: "LAM sensor",
-    #0x5f: "Info swap",
+    # 0x5e: "LAM sensor",
+    # 0x5f: "Info swap",
     0x60: "Suspension Control Request",
     0x61: "Suspension Control",
     0x62: "RDC/DWS Status",
-    #0x6d: "Mirror control",
-    #0x70: "Remote control central locking status",
-    #0x71: "Rain Sensor Status",
-    #0x72: "Check control remote central locking",
+    # 0x6d: "Mirror control",
+    # 0x70: "Remote control central locking status",
+    # 0x71: "Rain Sensor Status",
+    # 0x72: "Check control remote central locking",
     0x73: "Key Status Request",
     0x74: "Key Status",
     0x75: "Wiper Status Request",
     0x76: "Visual Indicators",
     0x77: "Wiper Status",
-    #0x78: "Seat Memory",
+    # 0x78: "Seat Memory",
     0x79: "Door Status Request",
     0x7a: "Door Status",
     0x7c: "Sunroof Status",
@@ -167,7 +170,7 @@ BUS_COMMANDS = {
     0x87: "Aux Heat/Vent Status Request",
     0x92: "Heater Status",
     0x93: "Heater Status Request",
-    #0x9f: "Headphone Status",
+    # 0x9f: "Headphone Status",
     0xa1: "Current Position Request",
     0xa2: "Current Position",
     0xa3: "Current Location Request",
@@ -182,6 +185,7 @@ BUS_COMMANDS = {
     0xd4: "NG-Radio Station List"
 }
 
+
 class BusFrame:
     source = None
     source_str = None
@@ -191,8 +195,10 @@ class BusFrame:
     cmd = None
     cmd_str = None
     data = None
+    data_hex = None
     checksum = None
     raw = None
+    raw_hex = None
 
     def __init__(self, source, dest, cmd, data=None):
         if data is None:
@@ -215,10 +221,12 @@ class BusFrame:
         self.cmd = cmd
         self.cmd_str = BUS_COMMANDS.get(cmd, "Unknown")
 
-        self.data = data
+        self.data = bytearray(data)
+        self.data_hex = self.data.hex(" ").upper()
 
         self.raw = copy(checksum_bytes)
         self.raw.append(self.checksum)
+        self.raw_hex = self.raw.hex(" ").upper()
 
     @staticmethod
     def from_data(frame_data):
@@ -229,8 +237,5 @@ class BusFrame:
             bytearray(frame_data[4:-1])
         )
 
-    def __hex__(self):
-        return self.raw.hex(" ").upper()
-
     def __str__(self):
-        return self.raw.hex(" ").upper()
+        return decode_string(self.data)

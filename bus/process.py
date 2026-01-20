@@ -41,3 +41,6 @@ class BusProcess(QThread):
             self.frame_received.emit(frame)
 
             del self.receive_buffer[0:frame_length]
+
+            if self.is_interruption_requested():
+                return
