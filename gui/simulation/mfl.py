@@ -11,8 +11,6 @@ class MFLSimulation(SimulationBase):
         from __feature__ import snake_case, true_property  # noqa
         super().__init__(main_window, "MFL Simulation", 0x50)
 
-        self.mode = 0x00
-
         self._init_button_area()
         self._init_mode_area()
 
@@ -49,7 +47,7 @@ class MFLSimulation(SimulationBase):
             )
 
     def transmit_volume(self, direction):
-        dest = 0x68 if self.mode == 0x00 else 0xC8
+        dest = 0x68 if self.mode_checkbox.val == 0x00 else 0xC8
         frame = BusFrame(0x50, dest, 0x32, [0x10 | direction])
         self.serial_manager.transmit_frame(frame)
 
@@ -57,7 +55,7 @@ class MFLSimulation(SimulationBase):
         if button == 0x40:
             if state != 0x00: return
 
-            self.mode = 0x40 if self.mode == 0x00 else 0x00
+            self.mode_checkbox.val = 0x40 if self.mode_checkbox.val == 0x00 else 0x00
             self.transmit_mode()
             return
 
@@ -83,13 +81,12 @@ class MFLSimulation(SimulationBase):
 
             return
 
-        dest = 0x68 if self.mode == 0x00 and button != 0x80 else 0xC8
+        dest = 0x68 if self.mode_checkbox.val == 0x00 and button != 0x80 else 0xC8
         frame = BusFrame(0x50, dest, 0x3B, [button | state])
         self.serial_manager.transmit_frame(frame)
 
     def transmit_mode(self):
-        self.mode_checkbox.val = self.mode
-        frame = BusFrame(0x50, 0xC8, 0x3B, [self.mode])
+        frame = BusFrame(0x50, 0xC8, 0x3B, [self.mode_checkbox.val])
         self.serial_manager.transmit_frame(frame)
 
     def announce(self):
