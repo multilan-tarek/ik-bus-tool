@@ -1,7 +1,7 @@
 import traceback
 from PySide6.QtWidgets import QDialog, QGridLayout, QComboBox, QGroupBox, QLabel, QCheckBox, QSpinBox, QDoubleSpinBox, QTimeEdit, QDateEdit, QPushButton
 from PySide6.QtGui import QIcon
-from PySide6.QtCore import Qt, QEvent, QTime, QDate
+from PySide6.QtCore import Qt, QEvent, QTime, QDate, QTimer
 from bus.frame import BusFrame
 from gui.widgets.display import DisplayWidget
 from gui.helper import get_logo, slugify
@@ -320,20 +320,42 @@ class SimulationCheckBoxInput(SimulationInput, QCheckBox):
 
 
 class SimulationButtonInput(QPushButton):
-    def __init__(self, area: SimulationArea, text, on_press=None, on_release=None):
+    def __init__(self, area: SimulationArea, text, on_press=None, on_release=None, on_hold=None):
         from __feature__ import snake_case, true_property  # noqa
         QPushButton.__init__(self)
 
         self.text = text
+        self.set_fixed_size(200, 50)
+        self.on_press_func = on_press
+        self.on_release_func = on_release
+        self.on_hold_func = on_hold
+        self.pressed_down = False
 
-        if on_press:
-            self.pressed.connect(on_press)
-
-        if on_release:
-            self.released.connect(on_release)
+        self.pressed.connect(self._on_press)
+        self.released.connect(self._on_release)
 
         area.layout.add_widget(self, area.input_index, 0)
         area.input_index += 1
+
+    def _on_press(self):
+        self.pressed_down = True
+        QTimer.single_shot(600, self._on_hold)
+
+        if self.on_press_func:
+            self.on_press_func()
+
+    def _on_release(self):
+        self.pressed_down = False
+
+        if self.on_release_func:
+            self.on_release_func()
+
+    def _on_hold(self):
+        if not self.pressed_down:
+            return
+
+        if self.on_hold_func:
+            self.on_hold_func()
 
 
 class SimulationDisplay(DisplayWidget):

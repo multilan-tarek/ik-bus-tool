@@ -115,7 +115,7 @@ BUS_COMMANDS = {
     0x37: "Select/Tone Menu",
     0x38: "CDC Control",
     0x39: "CDC Status",
-    # 0x3a: "Recirculating air control",
+    0x3a: "Recirculating Air Control",
     0x3b: "MFL Button",
     0x3c: "DSP Preset Control",
     0x40: "BC Input",

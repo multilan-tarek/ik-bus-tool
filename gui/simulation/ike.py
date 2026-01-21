@@ -1,14 +1,12 @@
 from functools import partial
 from random import randint, uniform
-
 from PySide6.QtCore import QDate, QTime
-
 from bus.frame import BusFrame
 from gui.helper import encode_string
 from gui.simulation.base import SimulationBase, SimulationArea, SimulationNumberInput, SimulationSelectInput, SimulationCheckBoxInput, SimulationFloatInput, SimulationTimeInput, SimulationDateInput, SimulationButtonInput, SimulationDisplay
 
 
-class IkeSimulation(SimulationBase):
+class IKESimulation(SimulationBase):
     def __init__(self, main_window):
         from __feature__ import snake_case, true_property  # noqa
         super().__init__(main_window, "IKE/KMB Simulation", 0x80)
@@ -561,3 +559,26 @@ class IkeSimulation(SimulationBase):
             case 0x20:
                 self.bc_speed_limit.val = randint(6, 299)
                 self.transmit_bc_data(None, property_id)
+
+    def announce(self):
+        super().announce()
+
+        self.transmit_odometer(None)
+        self.transmit_coding(None)
+        self.transmit_ignition_status(None)
+        self.transmit_sensor_status(None)
+        self.transmit_bc_status(None)
+        self.transmit_bc_data(None, 0x01)
+        self.transmit_bc_data(None, 0x02)
+        self.transmit_bc_data(None, 0x03)
+        self.transmit_bc_data(None, 0x04)
+        self.transmit_bc_data(None, 0x05)
+        self.transmit_bc_data(None, 0x06)
+        self.transmit_bc_data(None, 0x07)
+        self.transmit_bc_data(None, 0x08)
+        self.transmit_bc_data(None, 0x09)
+        self.transmit_bc_data(None, 0x0A)
+        self.transmit_bc_data(None, 0x0E)
+        self.transmit_bc_data(None, 0x1A)
+        self.transmit_bc_data(None, 0x0F)
+        self.transmit_bc_data(None, 0x10)

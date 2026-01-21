@@ -6,7 +6,8 @@ from serial import SerialException
 from bus.frame import BusFrame
 from gui.about import About
 from gui.helper import get_logo, open_url
-from gui.simulation.ike import IkeSimulation
+from gui.simulation.ike import IKESimulation
+from gui.simulation.mfl import MFLSimulation
 from gui.tools.charset_browser import CharsetBrowser
 from gui.tools.scanner import Scanner
 from gui.serial_manager import SerialManager
@@ -28,7 +29,9 @@ class GUI(QMainWindow):
         self.serial_manager.error_occurred.connect(self.serial_error_occurred)
         application.quit_event.connect(self.serial_manager.stop)
 
-        self.ike_simulation = IkeSimulation(self)
+        self.ike_simulation = IKESimulation(self)
+        self.mfl_simulation = MFLSimulation(self)
+
         self.scanner = Scanner(self)
         self.text_converter = TextConverter(self)
         self.charset_browser = CharsetBrowser(self)
@@ -117,8 +120,12 @@ class GUI(QMainWindow):
         menu_file_close.triggered.connect(lambda: exit())
 
         self.serial_manager.init_menu(menu_bar)
-        menu_sim = menu_bar.add_menu("&Simulation")
 
+        menu_sim = menu_bar.add_menu("&Simulation")
+        menu_sim_ike = menu_sim.add_action("IKE/KMB")
+        menu_sim_ike.triggered.connect(lambda: self.ike_simulation.show())
+        menu_sim_mfl = menu_sim.add_action("MFL")
+        menu_sim_mfl.triggered.connect(lambda: self.mfl_simulation.show())
 
         menu_tools = menu_bar.add_menu("&Tools")
         menu_tools_text_conv = menu_tools.add_action("Text Converter")
@@ -128,16 +135,12 @@ class GUI(QMainWindow):
         menu_tools_scanner = menu_tools.add_action("Bus Scanner")
         menu_tools_scanner.triggered.connect(lambda: self.scanner.show())
 
-
         menu_help = menu_bar.add_menu("&Help")
         menu_help_more_docs = menu_help.add_action("More Documentation")
         menu_help_more_docs.triggered.connect(lambda: open_url("https://github.com/piersholt/wilhelm-docs"))
         menu_help.add_separator()
         menu_help_about = menu_help.add_action("About I/K-Bus Tool")
         menu_help_about.triggered.connect(lambda: self.about.show())
-
-        menu_ike_sim = menu_sim.add_action("IKE/KMB")
-        menu_ike_sim.triggered.connect(lambda: self.ike_simulation.show())
 
     def init_status_bar(self):
         status_bar = self.status_bar()
