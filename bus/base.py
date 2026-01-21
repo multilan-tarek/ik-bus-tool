@@ -1,11 +1,17 @@
+import time
+from queue import Queue
 from PySide6.QtCore import Signal, QObject, QThread
-
 from bus.frame import BusFrame
 from bus.process import BusProcess
 from bus.receive import BusReceive
 from serial import SerialException, Serial, EIGHTBITS, PARITY_EVEN, STOPBITS_ONE
-
 from bus.transmit import BusTransmit
+
+
+class BusCollisionData:
+    echo_queue = Queue()
+    transmit_active = False
+    last_receive_time = time.monotonic()
 
 
 class Bus(QObject):
@@ -22,7 +28,7 @@ class Bus(QObject):
         self.transmit_queue = []
         self.processing = False
         self.transmitting = False
-
+        self.collision_data = None
         self.transmit_thread = None
         self.process_thread = None
         self.receive_thread = None
@@ -50,6 +56,10 @@ class Bus(QObject):
         if self.port is None:
             return
 
+        self.collision_data = BusCollisionData()
+        self.transmit_queue.clear()
+        self.receive_buffer.clear()
+
         try:
             self.serial = Serial(
                 port=self.port.device,
@@ -60,7 +70,7 @@ class Bus(QObject):
                 timeout=0.1
             )
 
-            self.transmit_thread = BusTransmit(self.transmit_queue, self.serial)
+            self.transmit_thread = BusTransmit(self.transmit_queue, self.serial, self.collision_data)
             self.transmit_thread.error_occurred.connect(self.thread_error_occurred)
             self.transmit_thread.finished.connect(self.transmitting_finished)
 
@@ -69,7 +79,7 @@ class Bus(QObject):
             self.process_thread.frame_received.connect(self.thread_frame_received)
             self.process_thread.finished.connect(self.processing_finished)
 
-            self.receive_thread = BusReceive(self.serial)
+            self.receive_thread = BusReceive(self.serial, self.collision_data)
             self.receive_thread.error_occurred.connect(self.thread_error_occurred)
             self.receive_thread.data_received.connect(self.data_received)
             self.receive_thread.start()
@@ -83,9 +93,9 @@ class Bus(QObject):
             self.serial.close()
 
         if self.transmit_thread:
-           self.transmit_thread.request_interruption()
-           self.transmit_thread.wait()
-           self.transmit_thread.delete_later()
+            self.transmit_thread.request_interruption()
+            self.transmit_thread.wait()
+            self.transmit_thread.delete_later()
 
         if self.process_thread:
             self.process_thread.request_interruption()

@@ -102,7 +102,7 @@ BUS_COMMANDS = {
     # 0x27: "MID display request",
     # 0x28: "MID denied access",
     # 0x29: "Report MID display",
-    # 0x2a: "OBC Special Indicators",
+    0x2a: "BC Status",
     0x2b: "Phone LEDs",
     0x2c: "Phone Status",
     0x2d: "Phone Dial",

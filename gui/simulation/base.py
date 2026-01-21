@@ -29,6 +29,9 @@ class SimulationInput:
         if self.area.on_input_change:
             self.area.on_input_change(self)
 
+        self.save()
+
+    def save(self):
         setattr(self.config, self.config_name, self.val)
 
     @property
@@ -99,6 +102,7 @@ class SimulationNumberInput(SimulationInput, QSpinBox):
             return
 
         self.value = value
+        self.save()
 
     @val_raw.setter
     def val_raw(self, value):
@@ -138,6 +142,7 @@ class SimulationFloatInput(SimulationInput, QDoubleSpinBox):
             return
 
         self.value = value
+        self.save()
 
     @val_raw.setter
     def val_raw(self, value):
@@ -174,6 +179,7 @@ class SimulationTimeInput(SimulationInput, QTimeEdit):
             return
 
         self.time = QTime.from_string(value, "HH-mm")
+        self.save()
 
     @val_raw.setter
     def val_raw(self, value):
@@ -210,6 +216,7 @@ class SimulationDateInput(SimulationInput, QDateEdit):
             return
 
         self.date = QDate.from_string(value, "dd-MM-yyyy")
+        self.save()
 
     @val_raw.setter
     def val_raw(self, value):
@@ -271,6 +278,8 @@ class SimulationSelectInput(SimulationInput, QComboBox):
         if select_index >= 0:
             self.current_index = select_index
 
+        self.save()
+
 
 class SimulationCheckBoxInput(SimulationInput, QCheckBox):
     def __init__(self, area: SimulationArea, title, checked_value=1, on_change=None):
@@ -303,6 +312,7 @@ class SimulationCheckBoxInput(SimulationInput, QCheckBox):
             return
 
         self.checked = value == self.checked_value
+        self.save()
 
     @val_raw.setter
     def val_raw(self, value):
