@@ -12,6 +12,7 @@ class Main(QApplication):
 
     def __init__(self, args):
         super().__init__(args)
+        self.set_style("Fusion")
         self.aboutToQuit.connect(self.on_quit_event)
         self.config = Config()
         self.gui = GUI(self)

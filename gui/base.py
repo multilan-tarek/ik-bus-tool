@@ -82,7 +82,7 @@ class GUI(QMainWindow):
     def init_receive_area(self):
         self.table = QTableWidget()
 
-        self.table.style_sheet = "QTableView{border: 1px solid #d8d8d8;}"
+      #  self.table.style_sheet = "QTableView{border: 1px solid #d8d8d8;}"
         #self.table.horizontal_header().style_sheet = "border: none; border-bottom: 1px solid #d8d8d8;"
         self.table.horizontal_header().stretch_last_section = True
         self.table.vertical_header().hide()

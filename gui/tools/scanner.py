@@ -61,7 +61,7 @@ class Scanner(QDialog):
         self.status = QLabel()
 
         self.table = QTableWidget()
-        self.table.style_sheet = "QTableView{border: 1px solid #d8d8d8;}"
+        #self.table.style_sheet = "QTableView{border: 1px solid #d8d8d8;}"
         self.table.vertical_header().hide()
         self.table.horizontal_header().stretch_last_section = True
         self.table.edit_triggers = QAbstractItemView.EditTrigger.NoEditTriggers

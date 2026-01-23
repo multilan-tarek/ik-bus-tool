@@ -1,6 +1,6 @@
 from functools import partial
 from random import randint, uniform
-from PySide6.QtCore import QDate, QTime, QTimer
+from PySide6.QtCore import QDate, QTime, QTimer, Qt
 from bus.frame import BusFrame
 from gui.helper import encode_string
 from gui.simulation.base import SimulationBase, SimulationArea, SimulationNumberInput, SimulationSelectInput, SimulationCheckBoxInput, SimulationFloatInput, SimulationTimeInput, SimulationDateInput, SimulationButtonInput, SimulationDisplay
@@ -23,7 +23,8 @@ class MFLSimulation(SimulationBase):
     def _init_mode_area(self):
         area = SimulationArea(self, "Mode", None, 0, 0)
         self.mode_checkbox = SimulationCheckBoxInput(area, "Phone Mode", 0x40)
-        self.mode_checkbox.enabled = False
+        self.mode_checkbox.set_attribute(Qt.WA_TransparentForMouseEvents, True)
+        self.mode_checkbox.focus_policy = Qt.NoFocus
 
     def _init_button_area(self):
         area = SimulationArea(self, "Buttons", None, 0, 1)
