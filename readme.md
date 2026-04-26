@@ -4,6 +4,8 @@
 LIN-Bus (BMW I/K-Bus Protocol) Logger & Writer  
 
 ![Screenshot](https://pub.files.multilan.de/ik-bus-tool/screenshot1.png)
+![Screenshot](https://pub.files.multilan.de/ik-bus-tool/screenshot2.png)
+![Screenshot](https://pub.files.multilan.de/ik-bus-tool/screenshot3.png)
   
 ### Features  
 - Logging  
