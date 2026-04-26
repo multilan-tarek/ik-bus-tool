@@ -17,6 +17,7 @@ class IKESimulation(SimulationBase):
         self.frame_routing[0x15] = self.update_coding
         self.frame_routing[0x16] = self.transmit_odometer
         self.frame_routing[0x41] = self.process_bc_request
+        self.frame_routing[0x23] = self.process_display_text
 
         self._init_ignition_status_area()
         self._init_sensor_status_area()
@@ -47,7 +48,7 @@ class IKESimulation(SimulationBase):
         self.sensor_status_gears = {
             "Unknown": 0x00,
             "Park": 0xB0,
-            "Reverse": 0x30,
+            "Reverse": 0x10,
             "Neutral": 0x70,
             "1st Gear": 0x20,
             "2nd Gear": 0x60,
@@ -165,7 +166,7 @@ class IKESimulation(SimulationBase):
 
     def _init_display_area(self):
         area = SimulationArea(self, "Display", None, 0, 3, grid_x_stretch=5)
-        SimulationDisplay(area)
+        self.display = SimulationDisplay(area)
 
     def _sync_formats_and_units(self, _):
         if not self.coding_sim_sync_formats_units.val:
@@ -503,6 +504,12 @@ class IKESimulation(SimulationBase):
         self.coding_aux_ctl_type.val = byte_4 & 0x40
 
         self.transmit_coding(None)
+
+    def process_display_text(self, frame):
+        self.display.data = frame.data[2:]
+
+
+        # 62 30   C6 C8 20 B2 B2 B2 B2 B2 B2 B2 B2 B2 B2 B2 B2 B2 B2 B2 B2 AC
 
     def process_bc_request(self, frame):
         property_id = frame.data[0]

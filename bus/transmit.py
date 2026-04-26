@@ -14,6 +14,8 @@ class BusTransmit(QThread):
     collision_backoff_base = 10
 
     def __init__(self, transmit_queue, serial, collision_data):
+        from __feature__ import snake_case, true_property  # noqa
+
         self.transmit_queue = transmit_queue
         self.serial = serial
         self.collision_data = collision_data

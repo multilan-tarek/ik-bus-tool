@@ -1,6 +1,6 @@
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QFont
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QGroupBox, QTableWidget, \
-    QAbstractItemView, QTableWidgetItem, QFileDialog, QMessageBox
+    QAbstractItemView, QTableWidgetItem, QFileDialog, QMessageBox, QCheckBox
 from serial import SerialException
 
 from bus.frame import BusFrame
@@ -23,6 +23,7 @@ class GUI(QMainWindow):
         self.config = application.config
         self.frame_log = []
         self.table = None
+        self.scroll_to_bottom_cb = None
 
         self.serial_manager = SerialManager(self.config)
         self.serial_manager.frame_received.connect(self.frame_received)
@@ -37,11 +38,6 @@ class GUI(QMainWindow):
         self.charset_browser = CharsetBrowser(self)
         self.about = About(self)
 
-
-
-
-
-
         self.window_title = "I/K-Bus Tool"
         self.window_icon = QIcon(get_logo())
 
@@ -52,14 +48,14 @@ class GUI(QMainWindow):
         main_layout.add_spacing(8)
         main_layout.add_widget(TransmitArea(self.config, self.serial_manager))
         main_layout.add_spacing(8)
-        main_layout.add_widget(self.init_filter_area())
-        main_layout.add_spacing(8)
+        # main_layout.add_widget(self.init_filter_area())
+        # main_layout.add_spacing(8)
         main_layout.add_widget(self.init_receive_area())
 
         self.init_menu_bar()
-        #self.init_status_bar()
+        # self.init_status_bar()
 
-        #self.minimum_size = main_layout.size_hint()
+        # self.minimum_size = main_layout.size_hint()
         self.set_fixed_width(1200)
         self.set_fixed_height(900)
         self.show()
@@ -75,15 +71,26 @@ class GUI(QMainWindow):
         self.table.set_item(table_row, 1, QTableWidgetItem(frame.dest_str))
         self.table.set_item(table_row, 2, QTableWidgetItem(frame.cmd_str))
         self.table.set_item(table_row, 3, QTableWidgetItem(str(frame)))
-        self.table.set_item(table_row, 4, QTableWidgetItem(frame.raw_hex))
 
-        self.table.scroll_to_bottom()
+        raw_item = QTableWidgetItem(frame.raw_hex)
+        mono = QFont("Monospace")
+        mono.style_hint = QFont.StyleHint.Monospace
+        raw_item.set_font(mono)
+
+        self.table.set_item(table_row, 4, raw_item)
+
+        if self.config.scroll_to_bottom:
+            self.table.scroll_to_bottom()
 
     def init_receive_area(self):
+        area = QWidget()
+        area_layout = QVBoxLayout()
+        area.set_layout(area_layout)
+
         self.table = QTableWidget()
 
-      #  self.table.style_sheet = "QTableView{border: 1px solid #d8d8d8;}"
-        #self.table.horizontal_header().style_sheet = "border: none; border-bottom: 1px solid #d8d8d8;"
+        #  self.table.style_sheet = "QTableView{border: 1px solid #d8d8d8;}"
+        # self.table.horizontal_header().style_sheet = "border: none; border-bottom: 1px solid #d8d8d8;"
         self.table.horizontal_header().stretch_last_section = True
         self.table.vertical_header().hide()
         self.table.edit_triggers = QAbstractItemView.EditTrigger.NoEditTriggers
@@ -91,11 +98,25 @@ class GUI(QMainWindow):
         self.table.column_count = 5
         self.table.set_horizontal_header_labels(["Source", "Destination", "Type", "Decoded", "Hex"])
 
-        return self.table
+        self.scroll_to_bottom_cb = QCheckBox()
+        self.scroll_to_bottom_cb.text = "Scroll to bottom"
+        self.scroll_to_bottom_cb.checked = self.config.scroll_to_bottom or True
+        self.scroll_to_bottom_cb.clicked.connect(self.scroll_to_bottom_toggled)
+
+        area_layout.add_widget(self.table)
+        area_layout.add_spacing(6)
+        area_layout.add_widget(self.scroll_to_bottom_cb)
+
+        return area
+
+    def scroll_to_bottom_toggled(self):
+        self.config.scroll_to_bottom = self.scroll_to_bottom_cb.checked
+
+        if self.scroll_to_bottom_cb.checked:
+            self.table.scroll_to_bottom()
 
     def init_filter_area(self):
         area = QGroupBox("Filter")
-
 
         return area
 
@@ -145,18 +166,19 @@ class GUI(QMainWindow):
     def init_status_bar(self):
         status_bar = self.status_bar()
 
-        #self.read_buffer_fill = QProgressBar()
-        #self.read_buffer_fill.set_range(0, 100)
-        #self.read_buffer_fill.value = 0
-        #self.read_buffer_fill.text_visible = False
-        #self.read_buffer_fill.fixed_height = 10
-        #status_bar.add_permanent_widget(self.read_buffer_fill)
-#
-        #self.write_buffer_fill = QProgressBar()
-        #self.write_buffer_fill.set_range(0, 100)
-        #self.write_buffer_fill.value = 0
-        #self.write_buffer_fill.text_visible = False
-        #status_bar.add_permanent_widget(self.write_buffer_fill)
+        # self.read_buffer_fill = QProgressBar()
+        # self.read_buffer_fill.set_range(0, 100)
+        # self.read_buffer_fill.value = 0
+        # self.read_buffer_fill.text_visible = False
+        # self.read_buffer_fill.fixed_height = 10
+        # status_bar.add_permanent_widget(self.read_buffer_fill)
+
+    #
+    # self.write_buffer_fill = QProgressBar()
+    # self.write_buffer_fill.set_range(0, 100)
+    # self.write_buffer_fill.value = 0
+    # self.write_buffer_fill.text_visible = False
+    # status_bar.add_permanent_widget(self.write_buffer_fill)
 
     def open_bin(self):
         file_path = QFileDialog.get_open_file_name(self, "Open BIN", filter="Binary Files (*.bin);;All Files (*)")[0]
@@ -202,7 +224,6 @@ class GUI(QMainWindow):
             return
 
         QMessageBox.information(self, "File loaded", "File successfully loaded")
-
 
     def save_as_bin(self):
         file_path = QFileDialog.get_save_file_name(self, "Save as BIN", filter="Binary Files (*.bin);;All Files (*)")[0]

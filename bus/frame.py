@@ -106,7 +106,7 @@ BUS_COMMANDS = {
     0x2b: "Phone LEDs",
     0x2c: "Phone Status",
     0x2d: "Phone Dial",
-    # 0x31: "Button",
+    0x31: "MID Soft Button",
     0x32: "Volume Control",
     # 0x33: "Part number status",
     0x34: "DSP Control",

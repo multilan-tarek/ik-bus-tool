@@ -1,15 +1,14 @@
 import time
-
 from PySide6.QtCore import QThread, Signal
-from serial import SerialException
-
 
 class BusReceive(QThread):
     error_occurred = Signal(Exception)
     data_received = Signal(bytes)
 
     def __init__(self, serial, collision_data):
+        from __feature__ import snake_case, true_property  # noqa
         super().__init__()
+
         self.serial = serial
         self.collision_data = collision_data
 

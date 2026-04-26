@@ -7,7 +7,9 @@ class BusProcess(QThread):
     frame_received = Signal(BusFrame)
 
     def __init__(self, receive_buffer):
+        from __feature__ import snake_case, true_property  # noqa
         super().__init__()
+
         self.receive_buffer = receive_buffer
 
     def run(self):

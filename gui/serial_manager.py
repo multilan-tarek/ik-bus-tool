@@ -1,8 +1,10 @@
+import glob
+import sys
 from functools import partial
 from PySide6.QtCore import QTimer, Signal, QObject
-from PySide6.QtWidgets import QMessageBox
-from serial.serialutil import SerialException
 from serial.tools import list_ports
+from serial.tools.list_ports_linux import SysFS
+
 from bus.base import Bus
 from bus.frame import BusFrame
 
@@ -22,9 +24,30 @@ class SerialManager(QObject):
         self.menu_start = None
         self.menu_auto_start = None
         self.menu_ports = None
-        self.ports = list_ports.comports()
+        self.ports = self.get_ports()
+
         self.selected_port = None
         self.bus = None
+
+    @staticmethod
+    def get_ports():
+        ports = list_ports.comports()
+
+        if sys.platform == "linux" or sys.platform == "linux2":
+            devices = glob.glob('/dev/lin/*')
+
+            for device in devices:
+                sys_fs = SysFS(device)
+
+                if sys_fs.subsystem == "platform":
+                    continue
+
+                sys_fs.description = f"LIN Bus {sys_fs.name.upper()}"
+                sys_fs.name = sys_fs.description
+
+                ports.append(sys_fs)
+
+        return ports
 
     def load_port_config(self):
         for port in self.ports:
@@ -36,7 +59,7 @@ class SerialManager(QObject):
             self.start()
 
     def check_ports(self):
-        available_ports = list_ports.comports()
+        available_ports = self.get_ports()
 
         if self.ports == available_ports: return
         self.ports = available_ports
@@ -93,9 +116,6 @@ class SerialManager(QObject):
             port_action.checkable = True
             port_action.checked = port == self.selected_port
             port_action.triggered.connect(partial(lambda p: self.select_port(p), p=port))
-
-
-
 
     def toggle_start_stop(self):
         if self.bus:
